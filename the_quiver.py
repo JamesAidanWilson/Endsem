@@ -971,6 +971,31 @@ def linear_fit(X, Y):
     c = y_mean - m * x_mean
     return c, m
 
+# EXPONENTIAL FITTING
+
+def exponential_fit(xs, ys):
+    # y = a * e**(p * x)
+
+    # transforming data into linear by taking log
+    ys = list(map(math.ln, ys))
+
+    # linear fit
+    c, m = linear_fit(xs, ys)
+
+    # transforming back to exponentials
+    a = math.e ** c
+    p = m
+    return a, p
+
+# PEARSON'S r
+
+def pearsons_r(xs, ys):
+    mean_x = sum(xs)/len(xs)
+    mean_y = sum(ys)/len(ys)
+
+    r = math.sqrt(sum((xs[i] - mean_x)*(ys[i] - mean_y) for i in range(len(xs)))**2/(sum((xs[i] - mean_x)**2 for i in range(len(xs)))*sum((ys[i] - mean_y)**2 for i in range(len(ys)))))
+    return r
+
 
 
 ### --- TRIALS/TESTING --- ###
