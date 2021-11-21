@@ -872,91 +872,105 @@ def Euler_FOW(f, x_0, y_0, x_max, h):
 
 # RUNGE KUTTA METHOD (RK4)
 
-def RK4(f, x_0, y_0, x_range, h):
+#defining function for runge kutta
+def runge_kutta(f1, f2, x_0, y_0, z_0, x_n, h):  #input- initial value problem x_0, y(x_0), y'(x_0), end point, interval width
+    """ will give solution from x=x_0 to x=x_n
+    y(x_0) = y_0 
+    y'(x_0) = z_0
+    z = dy/dx
+    """
+    x_i = []
+    y_i = []
+    z_i = []      # dy/dx
+    x_i.append(x_0)
+    y_i.append(y_0)
+    z_i.append(z_0)
+
+    n = int((x_n-x_0)/h)      # no. of steps than we need
+    for i in range(n):
+        x_i.append(x_i[i] + h)
+        k1 = h * f2(x_i[i], y_i[i], z_i[i])
+        l1 = h * f1(x_i[i], y_i[i], z_i[i])
+        k2 = h * f2(x_i[i] + h/2, y_i[i] + k1/2, z_i[i] + l1/2)
+        l2 = h * f1(x_i[i] + h/2, y_i[i] + k1/2, z_i[i] + l1/2)
+        k3 = h * f2(x_i[i] + h/2, y_i[i] + k2/2, z_i[i] + l2/2)
+        l3 = h * f1(x_i[i] + h/2, y_i[i] + k2/2, z_i[i] + l2/2)
+        k4 = h * f2(x_i[i] + h, y_i[i] + k3, z_i[i] + l3)
+        l4 = h * f1(x_i[i] + h, y_i[i] + k3, z_i[i] + l3)
+
+        y_i.append(y_i[i] + (k1 + 2*k2 + 2*k3 + k4)/6)
+        z_i.append(z_i[i] + (l1 + 2*l2 + 2*l3 + l4)/6)
     
-    X = [x_0]; Y = [y_0]
-    x_min, x_max = x_range
+    return x_i,y_i,z_i
 
-    while X[-1] < x_max:
-        x = X[-1]
-        y = Y[-1]
-        k1 = h * f(x, y)
-        k2 = h * f(x + (h / 2), y + (k1 / 2))
-        k3 = h * f(x + (h / 2), y + (k2 / 2))
-        k4 = h * f(x + h, y + k3)
-        x += h
-        y += (k1 + 2 * k2 + 2 * k3 + k4) / 6
-        X.append(x)
-        Y.append(y)
 
-    while X[0] > x_min:
-        x = X[0]
-        y = Y[0]
-        k1 = h * f(x, y)
-        k2 = h * f(x - (h / 2), y - (k1 / 2))
-        k3 = h * f(x - (h / 2), y - (k2 / 2))
-        k4 = h * f(x - h, y - k3)
-        x -= h
-        y -= (k1 + 2 * k2 + 2 * k3 + k4) / 6
-        X.insert(0, x)
-        Y.insert(0, y)
+# %%
+# function for lagrange interpolation
+def lag_interpol(zeta_h, zeta_l, yh, yl, y):
+    zeta = zeta_l + (zeta_h - zeta_l) * (y - yl)/(yh - yl)
+    return zeta
 
-    return X, Y
 
-# SHOOTING METHOD
+# function for shooting method
+def SM(f1, f2, x_0, y_0, x_n, y_f, guess1, guess2, h, TOL=1e-6):
+    '''x_0: Lower boundary value of x
+    y_0 = y(x_0)
+    x_n: Upper boundary value of x
+    y_f = y(x_n)
+    z = dy/dx
+    '''
+    x, y, z = runge_kutta(f1, f2, x_0, y_0, guess1, x_n, h)
+    yn = y[-1]
 
-def shooting_method(
-    f, root1, root2, ode_integrator="rk4", iteration_limit=10, h=0.01, diff=False):
+    if abs(yn - y_f) > TOL:
+        if yn < y_f:
+            zeta_l = guess1
+            yl = yn
 
-    if ode_integrator == "rk4":
-        ode_solve = RK4
-    elif ode_integrator == "euler":
-        ode_solve = Euler_FOW
-    iteration_count = 0
-    guess1 = [root1[0], 1]
-    guess2 = [root1[0], -1]
-    if root2[1] != 0:
-        Y = [0]
-    else:
-        Y = [1]
-    X = [0]
-    while (
-        abs(Y[-1] - root2[1]) >= 10 ** -13
-        and iteration_count < iteration_limit
-    ):
-        if iteration_count == 0:
-            guess = guess1.copy()
-        elif iteration_count == 1:
-            guess1.append(Y[-1])
-            guess = guess2.copy()
-        else:
-            if iteration_count == 2:
-                guess2.append(Y[-1])
+            x, y, z = runge_kutta(f1, f2, x_0, y_0, guess2, x_n, h)
+            yn = y[-1]
+
+            if yn > y_f:
+                zeta_h = guess2
+                yh = yn
+
+                # calculate zeta using Lagrange interpolation
+                zeta = lag_interpol(zeta_h, zeta_l, yh, yl, y_f)
+
+                # using this zeta to solve using runge-kutta
+                x, y, z = runge_kutta(f1, f2, x_0, y_0, zeta, x_n, h)
+                return x, y, z
+
             else:
-                guess1[2] = Y[-1]
-            # generating new guess
-            guess = guess1[1] + (guess2[1] - guess1[1]) * (
-                root2[1] - guess1[2]
-            ) / (guess2[2] - guess1[2])
-            guess1[1] = guess
-            guess = guess1
-        X, Z = ode_solve(
-            f,
-            (guess[0] - h, root2[0] + h),
-            (guess[0], guess[1]),
-            h=h / 2,
-        )
-        X = list(map(lambda x: round(x, 6), X))
+                print("Bracketing FAIL! Try another set of guesses.")
 
-        def dy_dx(x, y):
-            return Z[X.index(round(x, 6))]
 
-        X, Y = ode_solve(dy_dx, (guess[0], root2[0]), root1, h=h)
-        iteration_count += 1
-    if diff:
-        return X, Y, dy_dx
+        elif yn > y_f:
+            zeta_h = guess1
+            yh = yn
+
+            x, y, z = runge_kutta(f1, f2, x_0, y_0, guess2, x_n, h)
+            yn = y[-1]
+
+            if yn < y_f:
+                zeta_l = guess2
+                yl = yn
+
+                # calculate zeta using Lagrange interpolation
+                zeta = lag_interpol(zeta_h, zeta_l, yh, yl, y_f)
+
+                # using this zeta to solve using runge-kutta
+                x, y, z = runge_kutta(f1, f2, x_0, y_0, zeta, x_n, h)
+                return x, y, z
+
+            else:
+                print("Try another guess.")
+
+
     else:
-        return X, Y
+        return x, y, z
+
+
 
 
 ### --- GRAPH FITTING --- ###
