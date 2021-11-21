@@ -740,6 +740,7 @@ def NewtonRaphson(x_o,e,f):
             print(str(x_o) + " is the root.")
         i += 1
     print("The root is: " + str(x_o))
+    return x_o
 
 # LAGUERRE METHOD FOR POLYNOMIALS
 
