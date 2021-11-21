@@ -961,7 +961,7 @@ def shooting_method(
 
 ### --- GRAPH FITTING --- ###
 
-# LINEAR FITTING
+# LINEAR FITTING (LEAST SQUARES)
 
 def linear_fit(X, Y):
     # y = mx + c, len(X) = len(Y) is assumed
@@ -971,13 +971,13 @@ def linear_fit(X, Y):
     c = y_mean - m * x_mean
     return c, m
 
-# EXPONENTIAL FITTING
+# EXPONENTIAL FITTING (USING LINEAR FIT)
 
 def exponential_fit(xs, ys):
     # y = a * e**(p * x)
 
     # transforming data into linear by taking log
-    ys = list(map(math.ln, ys))
+    ys = list(map(math.log, ys))
 
     # linear fit
     c, m = linear_fit(xs, ys)
