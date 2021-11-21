@@ -1010,18 +1010,3 @@ def pearsons_r(xs, ys):
     r = math.sqrt(sum((xs[i] - mean_x)*(ys[i] - mean_y) for i in range(len(xs)))**2/(sum((xs[i] - mean_x)**2 for i in range(len(xs)))*sum((ys[i] - mean_y)**2 for i in range(len(ys)))))
     return r
 
-
-
-### --- TRIALS/TESTING --- ###
-
-def trial1():
-    print("Confirmed.")
-
-def trial2():
-    print("It worked.")
-
-def trial3():
-    print("Cross-checked.")
-
-def trial4():
-    print("One last time.")
